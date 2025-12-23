@@ -17,6 +17,12 @@ func main() {
 			os.Exit(1)
 		}
 
-		fmt.Printf("%v: command not found \n", strings.TrimSpace(prompt))
+		command := strings.TrimSpace(prompt)
+
+		if command == "exit" {
+			os.Exit(0)
+		}
+
+		fmt.Printf("%v: command not found \n", command)
 	}
 }
