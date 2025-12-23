@@ -1,13 +1,14 @@
 package main
 
-import (
-	"fmt"
-)
-
-// Ensures gofmt doesn't remove the "fmt" import in stage 1 (feel free to remove this!)
-var _ = fmt.Print
+import "fmt"
 
 func main() {
-	// TODO: Uncomment the code below to pass the first stage
-	// fmt.Print("$ ")
+	var prompt string
+
+	fmt.Print("$ ")
+	_, err := fmt.Scan(&prompt)
+
+	if err != nil {
+		fmt.Printf("%v\n", err)
+	}
 }
