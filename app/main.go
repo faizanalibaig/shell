@@ -21,8 +21,15 @@ func main() {
 
 		if command == "exit" {
 			os.Exit(0)
+		} else if command[:4] == "echo" {
+			echo(command[5:])
+			continue
 		}
 
 		fmt.Printf("%v: command not found \n", command)
 	}
+}
+
+func echo(message string) {
+	fmt.Println(message)
 }
