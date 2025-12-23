@@ -1,14 +1,16 @@
 package main
 
-import "fmt"
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+)
 
 func main() {
-	var prompt string
 
 	fmt.Print("$ ")
-	_, err := fmt.Scan(&prompt)
+	prompt, _ := bufio.NewReader(os.Stdin).ReadString('\n')
 
-	if err != nil {
-		fmt.Printf("%v\n", err)
-	}
+	fmt.Printf("%v: command not found", strings.TrimSpace(prompt))
 }
