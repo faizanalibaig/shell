@@ -66,7 +66,7 @@ func ReadFromStdin() ([]string, error) {
 		return []string{}, fmt.Errorf("error reading from stdin: %v", err)
 	}
 
-	command := prompt[:len(prompt)-2]
+	command := strings.TrimRight(prompt, "\r\n")
 	return strings.Split(command, " "), nil
 }
 
