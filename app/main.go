@@ -2,8 +2,10 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -47,13 +49,15 @@ func main() {
 		cmd := prompt[0]
 		args := prompt[1:]
 
+		path := os.Getenv("PATH")
+
 		switch cmd {
 		case exit.String():
 			HandleExit()
 		case echo.String():
 			HandleEcho(args)
 		case type_.String():
-			CheckType(args[0])
+			CheckType(args[0], path)
 		default:
 			fmt.Printf("%v: command not found \n", cmd)
 		}
@@ -70,13 +74,32 @@ func ReadFromStdin() ([]string, error) {
 	return strings.Split(command, " "), nil
 }
 
-func CheckType(cmd string) {
+func CheckType(cmd string, path string) {
 	if ok := builtins[cmd]; ok {
 		fmt.Printf("%s is a shell builtin\n", cmd)
 		return
 	}
 
+	fullPath, ok := GetFullPath(cmd, path)
+	if ok {
+		fmt.Printf("%s is %s\n", cmd, fullPath)
+		return
+	}
+
 	fmt.Printf("%s: not found\n", cmd)
+}
+
+func GetFullPath(cmd, path string) (string, bool) {
+	paths := strings.Split(path, ";")
+
+	for _, p := range paths {
+		fullPath := filepath.Join(p, cmd)
+		if _, err := os.Stat(fullPath); errors.Is(err, os.ErrNotExist) {
+			return fullPath, true
+		}
+	}
+
+	return "", false
 }
 
 func HandleEcho(args []string) {
