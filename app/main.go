@@ -4,52 +4,86 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"slices"
 	"strings"
 )
 
+type builtin int
+
+const (
+	echo builtin = iota
+	exit
+	type_
+)
+
+var builtins = map[string]bool{
+	echo.String():  true,
+	exit.String():  true,
+	type_.String(): true,
+}
+
+func (b builtin) String() string {
+	switch b {
+	case echo:
+		return "echo"
+	case exit:
+		return "exit"
+	case type_:
+		return "type"
+	default:
+		return "unknown"
+	}
+}
+
 func main() {
-	for true {
-		fmt.Print("$ ")
-		prompt, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	for {
+		fmt.Fprint(os.Stdout, "$ ")
+		prompt, err := ReadFromStdin()
 
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Error reading input:", err)
 			os.Exit(1)
 		}
 
-		command := strings.TrimSpace(prompt)
+		cmd := prompt[0]
+		args := prompt[1:]
 
-		if command[:5] == "type " {
-			if len(command) > 4 {
-				checkType(command[5:])
-			}
-
-			continue
-		} else if command == "exit" {
-			os.Exit(0)
-		} else if command[:5] == "echo " {
-			if len(command) > 4 {
-				echo(command[5:])
-			}
-
-			continue
+		switch cmd {
+		case exit.String():
+			HandleExit()
+		case echo.String():
+			HandleEcho(args)
+		case type_.String():
+			CheckType(args[0])
+		default:
+			fmt.Printf("%v: command not found \n", cmd)
 		}
-
-		fmt.Printf("%v: command not found \n", command)
 	}
 }
 
-func checkType(message string) {
-	types := []string{"echo", "exit", "type"}
-
-	if slices.Contains(types, message) {
-		fmt.Printf("%v is a shell builtin \n", message)
-	} else {
-		fmt.Printf("%v: not found \n", message)
+func ReadFromStdin() ([]string, error) {
+	prompt, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	if err != nil {
+		return []string{}, fmt.Errorf("error reading from stdin: %v", err)
 	}
+
+	command := prompt[:len(prompt)-2]
+	return strings.Split(command, " "), nil
 }
 
-func echo(message string) {
-	fmt.Println(message)
+func CheckType(cmd string) {
+	if ok := builtins[cmd]; ok {
+		fmt.Printf("%s is a shell builtin\n", cmd)
+		return
+	}
+
+	fmt.Printf("%s: not found\n", cmd)
+}
+
+func HandleEcho(args []string) {
+	joined := strings.Join(args, " ")
+	fmt.Println(joined)
+}
+
+func HandleExit() {
+	os.Exit(0)
 }
