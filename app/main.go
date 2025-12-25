@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -14,12 +15,14 @@ const (
 	echo builtin = iota
 	exit
 	type_
+	pwd
 )
 
 var builtins = map[string]bool{
 	echo.String():  true,
 	exit.String():  true,
 	type_.String(): true,
+	pwd.String():   true,
 }
 
 func (b builtin) String() string {
@@ -30,6 +33,8 @@ func (b builtin) String() string {
 		return "exit"
 	case type_:
 		return "type"
+	case pwd:
+		return "pwd"
 	default:
 		return "unknown"
 	}
@@ -55,6 +60,8 @@ func main() {
 			HandleEcho(args)
 		case type_.String():
 			CheckType(args[0])
+		case pwd.String():
+			GetCurrentDir()
 		default:
 			err := ExecuteCommand(cmd, args...)
 
@@ -100,17 +107,21 @@ func GetFullPath(cmd string) (string, bool) {
 }
 
 func ExecuteCommand(cmd string, args ...string) error {
-	//path, err := exec.LookPath(cmd)
-	//if err != nil {
-	//	return err
-	//}
-
 	command := exec.Command(cmd, args...)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 	command.Stdin = os.Stdin
 
 	return command.Run()
+}
+
+func GetCurrentDir() {
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("%s\n", dir)
 }
 
 func HandleEcho(args []string) {
