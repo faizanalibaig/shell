@@ -109,7 +109,7 @@ func ExecuteCommand(cmd string, args ...string) error {
 
 	fmt.Printf("Program was passed %v args (including program name).\nArg #0 (program name): %s\n", len(args)+1, cmd)
 	for index, line := range args {
-		fmt.Printf("Args #%v: %s\n", index+1, line)
+		fmt.Printf("Arg #%v: %s\n", index+1, line)
 	}
 
 	fmt.Printf("Program Signature: %v\n", string(output))
