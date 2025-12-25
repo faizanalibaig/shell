@@ -48,17 +48,19 @@ func main() {
 		cmd := prompt[0]
 		args := prompt[1:]
 
-		path := os.Getenv("PATH")
-
 		switch cmd {
 		case exit.String():
 			HandleExit()
 		case echo.String():
 			HandleEcho(args)
 		case type_.String():
-			CheckType(args[0], path)
+			CheckType(args[0])
 		default:
-			fmt.Printf("%v: command not found \n", cmd)
+			err := ExecuteCommand(cmd, args...)
+
+			if err != nil {
+				fmt.Printf("%v: command not found \n", cmd)
+			}
 		}
 	}
 }
@@ -73,13 +75,13 @@ func ReadFromStdin() ([]string, error) {
 	return strings.Split(command, " "), nil
 }
 
-func CheckType(cmd string, path string) {
+func CheckType(cmd string) {
 	if ok := builtins[cmd]; ok {
 		fmt.Printf("%s is a shell builtin\n", cmd)
 		return
 	}
 
-	fullPath, ok := GetFullPath(cmd, path)
+	fullPath, ok := GetFullPath(cmd)
 	if ok {
 		fmt.Printf("%s is %s\n", cmd, fullPath)
 		return
@@ -88,23 +90,25 @@ func CheckType(cmd string, path string) {
 	fmt.Printf("%s: not found\n", cmd)
 }
 
-func GetFullPath(cmd, path string) (string, bool) {
-	//paths := strings.Split(path, ":")
-	//
-	//for _, p := range paths {
-	//	fullPath := filepath.Join(p, cmd)
-	//	if _, err := os.Stat(fullPath); errors.Is(err, os.ErrNotExist) {
-	//		fmt.Println(p)
-	//		return fullPath, true
-	//	}
-	//}
-
+func GetFullPath(cmd string) (string, bool) {
 	path, err := exec.LookPath(cmd)
 	if err != nil {
 		return "", false
 	}
 
 	return path, true
+}
+
+func ExecuteCommand(cmd string, args ...string) error {
+	command := exec.Command(cmd, args...)
+	output, err := command.Output()
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Program was passed %s args\n %s", len(args)+1, string(output))
+	return nil
 }
 
 func HandleEcho(args []string) {
