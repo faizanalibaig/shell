@@ -90,7 +90,7 @@ func CheckType(cmd string, path string) {
 }
 
 func GetFullPath(cmd, path string) (string, bool) {
-	paths := strings.Split(path, ";")
+	paths := strings.Split(path, ":")
 
 	for _, p := range paths {
 		fullPath := filepath.Join(p, cmd)
