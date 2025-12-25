@@ -2,10 +2,9 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
+	"os/exec"
 	"strings"
 )
 
@@ -90,17 +89,22 @@ func CheckType(cmd string, path string) {
 }
 
 func GetFullPath(cmd, path string) (string, bool) {
-	paths := strings.Split(path, ":")
+	//paths := strings.Split(path, ":")
+	//
+	//for _, p := range paths {
+	//	fullPath := filepath.Join(p, cmd)
+	//	if _, err := os.Stat(fullPath); errors.Is(err, os.ErrNotExist) {
+	//		fmt.Println(p)
+	//		return fullPath, true
+	//	}
+	//}
 
-	for _, p := range paths {
-		fullPath := filepath.Join(p, cmd)
-		if _, err := os.Stat(fullPath); errors.Is(err, os.ErrNotExist) {
-			fmt.Println(p)
-			return fullPath, true
-		}
+	path, err := exec.LookPath(cmd)
+	if err != nil {
+		return "", false
 	}
 
-	return "", false
+	return path, true
 }
 
 func HandleEcho(args []string) {
