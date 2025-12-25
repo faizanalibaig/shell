@@ -100,20 +100,17 @@ func GetFullPath(cmd string) (string, bool) {
 }
 
 func ExecuteCommand(cmd string, args ...string) error {
-	command := exec.Command(cmd, args...)
-	output, err := command.Output()
-
+	path, err := exec.LookPath(cmd)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Program was passed %v args (including program name).\nArg #0 (program name): %s\n", len(args)+1, cmd)
-	for index, line := range args {
-		fmt.Printf("Arg #%v: %s\n", index+1, line)
-	}
+	command := exec.Command(path, args...)
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+	command.Stdin = os.Stdin
 
-	fmt.Printf("Program Signature: %v\n", string(output))
-	return nil
+	return command.Run()
 }
 
 func HandleEcho(args []string) {
