@@ -107,7 +107,12 @@ func ExecuteCommand(cmd string, args ...string) error {
 		return err
 	}
 
-	fmt.Printf("Program was passed %s args\n %s", len(args)+1, string(output))
+	fmt.Printf("Program was passed %v args\n Arg #0 (program name): %s", len(args)+1, cmd)
+	for index, line := range args {
+		fmt.Printf(" Args #%v: %s\n", index+1, line)
+	}
+
+	fmt.Printf("Program Signature: %v", string(output))
 	return nil
 }
 
