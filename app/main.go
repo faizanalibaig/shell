@@ -100,12 +100,12 @@ func GetFullPath(cmd string) (string, bool) {
 }
 
 func ExecuteCommand(cmd string, args ...string) error {
-	path, err := exec.LookPath(cmd)
-	if err != nil {
-		return err
-	}
+	//path, err := exec.LookPath(cmd)
+	//if err != nil {
+	//	return err
+	//}
 
-	command := exec.Command(path, args...)
+	command := exec.Command(cmd, args...)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 	command.Stdin = os.Stdin
