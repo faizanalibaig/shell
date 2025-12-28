@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -16,6 +15,7 @@ const (
 	exit
 	type_
 	pwd
+	cd
 )
 
 var builtins = map[string]bool{
@@ -23,6 +23,7 @@ var builtins = map[string]bool{
 	exit.String():  true,
 	type_.String(): true,
 	pwd.String():   true,
+	cd.String():    true,
 }
 
 func (b builtin) String() string {
@@ -35,6 +36,8 @@ func (b builtin) String() string {
 		return "type"
 	case pwd:
 		return "pwd"
+	case cd:
+		return "cd"
 	default:
 		return "unknown"
 	}
@@ -62,6 +65,8 @@ func main() {
 			CheckType(args[0])
 		case pwd.String():
 			GetCurrentDir()
+		case cd.String():
+			HandleChangeDir(args[0])
 		default:
 			err := ExecuteCommand(cmd, args...)
 
@@ -115,13 +120,26 @@ func ExecuteCommand(cmd string, args ...string) error {
 	return command.Run()
 }
 
-func GetCurrentDir() {
+func GetCurrentDir() (string, error) {
 	dir, err := os.Getwd()
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	fmt.Printf("%s\n", dir)
+	return dir, nil
+}
+
+func HandleChangeDir(path string) {
+	//currentDir, _ := os.Getwd()
+	//fullPath := filepath.Join(currentDir, path)
+
+	_, err := os.Stat(path)
+	if err != nil {
+		fmt.Printf("cd: %s: No such file or directory\n", path)
+	} else {
+		_ = os.Chdir(path)
+	}
 }
 
 func HandleEcho(args []string) {
