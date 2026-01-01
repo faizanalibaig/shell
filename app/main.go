@@ -145,7 +145,7 @@ func HandleHomeDir(home string) {
 func HandleEcho(args []string) {
 	str := strings.Join(args, " ")
 
-	if strings.HasPrefix(str, "'") && strings.HasSuffix(str, "'") {
+	if strings.HasPrefix(str, "'") && strings.Count(str, "'")%2 == 0 {
 		str = RemoveQuotes(str)
 	} else {
 		str = NormalizeText(str)
