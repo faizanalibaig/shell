@@ -131,15 +131,20 @@ func GetCurrentDir() (string, error) {
 }
 
 func HandleChangeDir(path string) {
-	//currentDir, _ := os.Getwd()
-	//fullPath := filepath.Join(currentDir, path)
-
 	_, err := os.Stat(path)
-	if err != nil {
+
+	if path == "~" {
+		home := os.Getenv("HOME")
+		HandleHomeDir(home)
+	} else if err != nil {
 		fmt.Printf("cd: %s: No such file or directory\n", path)
 	} else {
 		_ = os.Chdir(path)
 	}
+}
+
+func HandleHomeDir(home string) {
+	_ = os.Chdir(home)
 }
 
 func HandleEcho(args []string) {
