@@ -120,14 +120,9 @@ func ExecuteCommand(cmd string, args ...string) error {
 	return command.Run()
 }
 
-func GetCurrentDir() (string, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
+func GetCurrentDir() {
+	dir, _ := os.Getwd()
 	fmt.Printf("%s\n", dir)
-	return dir, nil
 }
 
 func HandleChangeDir(path string) {
@@ -148,8 +143,24 @@ func HandleHomeDir(home string) {
 }
 
 func HandleEcho(args []string) {
-	joined := strings.Join(args, " ")
-	fmt.Println(joined)
+	str := strings.Join(args, " ")
+
+	if strings.HasPrefix(str, "'") && strings.HasSuffix(str, "'") {
+		str = RemoveQuotes(str)
+	} else {
+		str = NormalizeText(str)
+	}
+
+	fmt.Println(str)
+}
+
+func RemoveQuotes(s string) string {
+	return strings.Replace(s, "'", "", -1)
+}
+
+func NormalizeText(text string) string {
+	str := strings.Fields(text)
+	return strings.Join(str, " ")
 }
 
 func HandleExit() {
