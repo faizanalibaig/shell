@@ -53,6 +53,10 @@ func main() {
 			os.Exit(1)
 		}
 
+		if len(prompt) == 0 {
+			continue
+		}
+
 		cmd := prompt[0]
 		args := prompt[1:]
 
@@ -69,9 +73,8 @@ func main() {
 			HandleChangeDir(args[0])
 		default:
 			err := ExecuteCommand(cmd, args...)
-
 			if err != nil {
-				fmt.Printf("%v: command not found \n", cmd)
+				fmt.Printf("%v: command not found\n", cmd)
 			}
 		}
 	}
@@ -80,11 +83,43 @@ func main() {
 func ReadFromStdin() ([]string, error) {
 	prompt, err := bufio.NewReader(os.Stdin).ReadString('\n')
 	if err != nil {
-		return []string{}, fmt.Errorf("error reading from stdin: %v", err)
+		return nil, err
 	}
 
 	command := strings.TrimRight(prompt, "\r\n")
-	return strings.Split(command, " "), nil
+	return parseInput(command), nil
+}
+
+func parseInput(input string) []string {
+	var args []string
+	var current strings.Builder
+	inSingleQuote := false
+
+	for i := 0; i < len(input); i++ {
+		ch := input[i]
+
+		switch ch {
+		case '\'':
+			inSingleQuote = !inSingleQuote
+
+		case ' ':
+			if inSingleQuote {
+				current.WriteByte(ch)
+			} else if current.Len() > 0 {
+				args = append(args, current.String())
+				current.Reset()
+			}
+
+		default:
+			current.WriteByte(ch)
+		}
+	}
+
+	if current.Len() > 0 {
+		args = append(args, current.String())
+	}
+
+	return args
 }
 
 func CheckType(cmd string) {
@@ -143,24 +178,7 @@ func HandleHomeDir(home string) {
 }
 
 func HandleEcho(args []string) {
-	str := strings.Join(args, " ")
-
-	if strings.HasPrefix(str, "'") && strings.Count(str, "'")%2 == 0 {
-		str = RemoveQuotes(str)
-	} else {
-		str = NormalizeText(str)
-	}
-
-	fmt.Println(str)
-}
-
-func RemoveQuotes(s string) string {
-	return strings.Replace(s, "'", "", -1)
-}
-
-func NormalizeText(text string) string {
-	str := strings.Fields(text)
-	return strings.Join(str, " ")
+	fmt.Println(strings.Join(args, " "))
 }
 
 func HandleExit() {
