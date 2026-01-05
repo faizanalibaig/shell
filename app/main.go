@@ -155,7 +155,7 @@ func HandleEcho(args []string) {
 }
 
 func RemoveQuotes(s string) string {
-	return strings.Replace(s, "'", "", -1)
+	return strings.Replace(s, "\"", "", -1)
 }
 
 func NormalizeText(text string) string {
