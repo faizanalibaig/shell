@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/google/shlex"
 )
 
 type builtin int
@@ -87,7 +89,13 @@ func ReadFromStdin() ([]string, error) {
 	}
 
 	command := strings.TrimRight(prompt, "\r\n")
-	return parseInput(command), nil
+	token, err := shlex.Split(command)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }
 
 func parseInput(input string) []string {
