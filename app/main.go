@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -45,10 +46,16 @@ func (b builtin) String() string {
 	}
 }
 
+var stdin = bufio.NewReader(os.Stdin)
+
 func main() {
 	for {
 		fmt.Fprint(os.Stdout, "$ ")
 		prompt, err := ReadFromStdin()
+
+		if err == io.EOF {
+			os.Exit(0)
+		}
 
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Error reading input:", err)
@@ -83,7 +90,7 @@ func main() {
 }
 
 func ReadFromStdin() ([]string, error) {
-	prompt, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	prompt, err := stdin.ReadString('\n')
 	if err != nil {
 		return nil, err
 	}
