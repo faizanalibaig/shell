@@ -98,38 +98,6 @@ func ReadFromStdin() ([]string, error) {
 	return token, nil
 }
 
-func parseInput(input string) []string {
-	var args []string
-	var current strings.Builder
-	inSingleQuote := false
-
-	for i := 0; i < len(input); i++ {
-		ch := input[i]
-
-		switch ch {
-		case '\'':
-			inSingleQuote = !inSingleQuote
-
-		case ' ':
-			if inSingleQuote {
-				current.WriteByte(ch)
-			} else if current.Len() > 0 {
-				args = append(args, current.String())
-				current.Reset()
-			}
-
-		default:
-			current.WriteByte(ch)
-		}
-	}
-
-	if current.Len() > 0 {
-		args = append(args, current.String())
-	}
-
-	return args
-}
-
 func CheckType(cmd string) {
 	if ok := builtins[cmd]; ok {
 		fmt.Printf("%s is a shell builtin\n", cmd)
@@ -170,15 +138,15 @@ func GetCurrentDir() {
 
 func HandleChangeDir(path string) {
 	_, err := os.Stat(path)
-
+	
 	if path == "~" {
 		home := os.Getenv("HOME")
 		HandleHomeDir(home)
 	} else if err != nil {
 		fmt.Printf("cd: %s: No such file or directory\n", path)
-	} else {
-		_ = os.Chdir(path)
-	}
+		} else {
+			_ = os.Chdir(path)
+		}
 }
 
 func HandleHomeDir(home string) {
@@ -192,3 +160,36 @@ func HandleEcho(args []string) {
 func HandleExit() {
 	os.Exit(0)
 }
+
+	
+	// func parseInput(input string) []string {
+	// 	var args []string
+	// 	var current strings.Builder
+	// 	inSingleQuote := false
+	
+	// 	for i := 0; i < len(input); i++ {
+	// 		ch := input[i]
+	
+	// 		switch ch {
+	// 		case '\'':
+	// 			inSingleQuote = !inSingleQuote
+	
+	// 		case ' ':
+	// 			if inSingleQuote {
+	// 				current.WriteByte(ch)
+	// 			} else if current.Len() > 0 {
+	// 				args = append(args, current.String())
+	// 				current.Reset()
+	// 			}
+	
+	// 		default:
+	// 			current.WriteByte(ch)
+	// 		}
+	// 	}
+	
+	// 	if current.Len() > 0 {
+	// 		args = append(args, current.String())
+	// 	}
+	
+	// 	return args
+	// }
