@@ -16,6 +16,7 @@ type builtin int
 const (
 	echo builtin = iota
 	exit
+	cat
 	type_
 	pwd
 	cd
@@ -23,6 +24,7 @@ const (
 
 var builtins = map[string]bool{
 	echo.String():  true,
+	cat.String():   true,
 	exit.String():  true,
 	type_.String(): true,
 	pwd.String():   true,
@@ -33,6 +35,8 @@ func (b builtin) String() string {
 	switch b {
 	case echo:
 		return "echo"
+	case cat:
+		return "cat"	
 	case exit:
 		return "exit"
 	case type_:
@@ -69,11 +73,26 @@ func main() {
 		cmd := prompt[0]
 		args := prompt[1:]
 
+		
 		switch cmd {
 		case exit.String():
 			HandleExit()
 		case echo.String():
-			HandleEcho(args)
+			if len(args) > 2 && (args[len(args) - 2] == ">" || args[len(args) - 2] == "1>") {
+				fileName := args[len(args)-1]
+				content := strings.Join(args[:len(args)-2], " ")
+				RedirectOutputToFile(fileName, content)
+				continue
+			} else {
+				HandleEcho(args)
+			}
+		case cat.String():
+			if len(args) <= 1 {
+				ReadContentFromFile(args[0])	
+			} else {
+				fmt.Fprintln(os.Stderr, "cat: too many arguments")
+				os.Exit(1)
+			}
 		case type_.String():
 			CheckType(args[0])
 		case pwd.String():
@@ -103,6 +122,28 @@ func ReadFromStdin() ([]string, error) {
 	}
 
 	return token, nil
+}
+
+func RedirectOutputToFile(fileName string, content string) {
+	err := os.WriteFile(fileName, []byte(content), 0644)
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error writing to file:", err)
+		os.Exit(1)
+	}
+}
+
+func ReadContentFromFile(fileName string) {
+    if len(fileName) == 0 {
+		fmt.Errorf("No file name provided")
+	}
+
+	content, err := os.ReadFile(fileName)
+	if err != nil {
+		os.Exit(1)
+	}
+
+	fmt.Println(string(content))
 }
 
 func CheckType(cmd string) {
@@ -167,36 +208,3 @@ func HandleEcho(args []string) {
 func HandleExit() {
 	os.Exit(0)
 }
-
-	
-	// func parseInput(input string) []string {
-	// 	var args []string
-	// 	var current strings.Builder
-	// 	inSingleQuote := false
-	
-	// 	for i := 0; i < len(input); i++ {
-	// 		ch := input[i]
-	
-	// 		switch ch {
-	// 		case '\'':
-	// 			inSingleQuote = !inSingleQuote
-	
-	// 		case ' ':
-	// 			if inSingleQuote {
-	// 				current.WriteByte(ch)
-	// 			} else if current.Len() > 0 {
-	// 				args = append(args, current.String())
-	// 				current.Reset()
-	// 			}
-	
-	// 		default:
-	// 			current.WriteByte(ch)
-	// 		}
-	// 	}
-	
-	// 	if current.Len() > 0 {
-	// 		args = append(args, current.String())
-	// 	}
-	
-	// 	return args
-	// }
