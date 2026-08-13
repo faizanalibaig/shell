@@ -73,19 +73,18 @@ func main() {
 		cmd := prompt[0]
 		args := prompt[1:]
 
+		if len(args) > 2 && (args[len(args) - 2] == ">" || args[len(args) - 2] == "1>") {
+			fileName := args[len(args)-1]
+			content := strings.Join(args[:len(args)-2], " ")
+			RedirectOutputToFile(fileName, content)
+			continue
+		} 
 		
 		switch cmd {
 		case exit.String():
 			HandleExit()
 		case echo.String():
-			if len(args) > 2 && (args[len(args) - 2] == ">" || args[len(args) - 2] == "1>") {
-				fileName := args[len(args)-1]
-				content := strings.Join(args[:len(args)-2], " ")
-				RedirectOutputToFile(fileName, content)
-				continue
-			} else {
 				HandleEcho(args)
-			}
 		case cat.String():
 			if len(args) <= 1 {
 				ReadContentFromFile(args[0])	
