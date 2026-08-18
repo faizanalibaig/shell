@@ -167,7 +167,7 @@ func ReadContentFromFile(stdout io.Writer, fileName string) {
 		os.Exit(1)
 	}
 
-	fmt.Fprintln(stdout, string(content))
+	fmt.Fprint(stdout, string(content))
 }
 
 func CheckType(stdout io.Writer, cmd string) {
