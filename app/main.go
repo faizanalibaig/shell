@@ -96,12 +96,7 @@ func main() {
 		case echo.String():
 			HandleEcho(stdout, args)
 		case cat.String():
-			if len(args) <= 1 {
-				ReadContentFromFile(stdout, args[0])
-			} else {
-				fmt.Fprintln(os.Stderr, "cat: too many arguments")
-				os.Exit(1)
-			}
+			ReadContentFromFile(stdout, args)
 		case type_.String():
 			CheckType(stdout, args[0])
 		case pwd.String():
@@ -157,17 +152,21 @@ func OpenRedirectFile(fileName string) (*os.File, error) {
 	return os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 }
 
-func ReadContentFromFile(stdout io.Writer, fileName string) {
-    if len(fileName) == 0 {
-		fmt.Errorf("No file name provided")
+func ReadContentFromFile(stdout io.Writer, fileNames []string) {
+	if len(fileNames) == 0 {
+		fmt.Fprintln(os.Stderr, "cat: no file name provided")
+		return
 	}
 
-	content, err := os.ReadFile(fileName)
-	if err != nil {
-		os.Exit(1)
-	}
+	for _, fileName := range fileNames {
+		content, err := os.ReadFile(fileName)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "cat: %s: No such file or directory\n", fileName)
+			continue
+		}
 
-	fmt.Fprint(stdout, string(content))
+		fmt.Fprint(stdout, string(content))
+	}
 }
 
 func CheckType(stdout io.Writer, cmd string) {
