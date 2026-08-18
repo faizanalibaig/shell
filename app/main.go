@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -73,36 +74,49 @@ func main() {
 		cmd := prompt[0]
 		args := prompt[1:]
 
-		if len(args) > 2 && (args[len(args) - 2] == ">" || args[len(args) - 2] == "1>") {
-			fileName := args[len(args)-1]
-			content := strings.Join(args[:len(args)-2], " ")
-			RedirectOutputToFile(fileName, content)
-			continue
-		} 
-		
+		var stdout io.Writer = os.Stdout
+		var redirectFile *os.File
+
+		rest, fileName, hasRedirect := ParseRedirect(args)
+		if hasRedirect {
+			file, err := OpenRedirectFile(fileName)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%s: No such file or directory\n", fileName)
+				continue
+			}
+
+			redirectFile = file
+			stdout = file
+			args = rest
+		}
+
 		switch cmd {
 		case exit.String():
 			HandleExit()
 		case echo.String():
-				HandleEcho(args)
+			HandleEcho(stdout, args)
 		case cat.String():
 			if len(args) <= 1 {
-				ReadContentFromFile(args[0])	
+				ReadContentFromFile(stdout, args[0])
 			} else {
 				fmt.Fprintln(os.Stderr, "cat: too many arguments")
 				os.Exit(1)
 			}
 		case type_.String():
-			CheckType(args[0])
+			CheckType(stdout, args[0])
 		case pwd.String():
-			GetCurrentDir()
+			GetCurrentDir(stdout)
 		case cd.String():
 			HandleChangeDir(args[0])
 		default:
-			err := ExecuteCommand(cmd, args...)
-			if err != nil {
+			err := ExecuteCommand(stdout, cmd, args...)
+			if errors.Is(err, exec.ErrNotFound) {
 				fmt.Printf("%v: command not found\n", cmd)
 			}
+		}
+
+		if redirectFile != nil {
+			redirectFile.Close()
 		}
 	}
 }
@@ -123,16 +137,27 @@ func ReadFromStdin() ([]string, error) {
 	return token, nil
 }
 
-func RedirectOutputToFile(fileName string, content string) {
-	err := os.WriteFile(fileName, []byte(content), 0644)
+func ParseRedirect(args []string) ([]string, string, bool) {
+	for i, arg := range args {
+		if arg != ">" && arg != "1>" {
+			continue
+		}
 
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error writing to file:", err)
-		os.Exit(1)
+		if i+1 >= len(args) {
+			return args, "", false
+		}
+
+		return args[:i], args[i+1], true
 	}
+
+	return args, "", false
 }
 
-func ReadContentFromFile(fileName string) {
+func OpenRedirectFile(fileName string) (*os.File, error) {
+	return os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+}
+
+func ReadContentFromFile(stdout io.Writer, fileName string) {
     if len(fileName) == 0 {
 		fmt.Errorf("No file name provided")
 	}
@@ -142,22 +167,22 @@ func ReadContentFromFile(fileName string) {
 		os.Exit(1)
 	}
 
-	fmt.Println(string(content))
+	fmt.Fprintln(stdout, string(content))
 }
 
-func CheckType(cmd string) {
+func CheckType(stdout io.Writer, cmd string) {
 	if ok := builtins[cmd]; ok {
-		fmt.Printf("%s is a shell builtin\n", cmd)
+		fmt.Fprintf(stdout, "%s is a shell builtin\n", cmd)
 		return
 	}
 
 	fullPath, ok := GetFullPath(cmd)
 	if ok {
-		fmt.Printf("%s is %s\n", cmd, fullPath)
+		fmt.Fprintf(stdout, "%s is %s\n", cmd, fullPath)
 		return
 	}
 
-	fmt.Printf("%s: not found\n", cmd)
+	fmt.Fprintf(stdout, "%s: not found\n", cmd)
 }
 
 func GetFullPath(cmd string) (string, bool) {
@@ -169,18 +194,18 @@ func GetFullPath(cmd string) (string, bool) {
 	return path, true
 }
 
-func ExecuteCommand(cmd string, args ...string) error {
+func ExecuteCommand(stdout io.Writer, cmd string, args ...string) error {
 	command := exec.Command(cmd, args...)
-	command.Stdout = os.Stdout
+	command.Stdout = stdout
 	command.Stderr = os.Stderr
 	command.Stdin = os.Stdin
 
 	return command.Run()
 }
 
-func GetCurrentDir() {
+func GetCurrentDir(stdout io.Writer) {
 	dir, _ := os.Getwd()
-	fmt.Printf("%s\n", dir)
+	fmt.Fprintf(stdout, "%s\n", dir)
 }
 
 func HandleChangeDir(path string) {
@@ -200,8 +225,8 @@ func HandleHomeDir(home string) {
 	_ = os.Chdir(home)
 }
 
-func HandleEcho(args []string) {
-	fmt.Println(strings.Join(args, " "))
+func HandleEcho(stdout io.Writer, args []string) {
+	fmt.Fprintln(stdout, strings.Join(args, " "))
 }
 
 func HandleExit() {
