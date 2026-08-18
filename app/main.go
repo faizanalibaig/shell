@@ -17,7 +17,6 @@ type builtin int
 const (
 	echo builtin = iota
 	exit
-	cat
 	type_
 	pwd
 	cd
@@ -25,7 +24,6 @@ const (
 
 var builtins = map[string]bool{
 	echo.String():  true,
-	cat.String():   true,
 	exit.String():  true,
 	type_.String(): true,
 	pwd.String():   true,
@@ -36,8 +34,6 @@ func (b builtin) String() string {
 	switch b {
 	case echo:
 		return "echo"
-	case cat:
-		return "cat"	
 	case exit:
 		return "exit"
 	case type_:
@@ -95,8 +91,6 @@ func main() {
 			HandleExit()
 		case echo.String():
 			HandleEcho(stdout, args)
-		case cat.String():
-			ReadContentFromFile(stdout, args)
 		case type_.String():
 			CheckType(stdout, args[0])
 		case pwd.String():
@@ -150,23 +144,6 @@ func ParseRedirect(args []string) ([]string, string, bool) {
 
 func OpenRedirectFile(fileName string) (*os.File, error) {
 	return os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-}
-
-func ReadContentFromFile(stdout io.Writer, fileNames []string) {
-	if len(fileNames) == 0 {
-		fmt.Fprintln(os.Stderr, "cat: no file name provided")
-		return
-	}
-
-	for _, fileName := range fileNames {
-		content, err := os.ReadFile(fileName)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "cat: %s: No such file or directory\n", fileName)
-			continue
-		}
-
-		fmt.Fprint(stdout, string(content))
-	}
 }
 
 func CheckType(stdout io.Writer, cmd string) {
